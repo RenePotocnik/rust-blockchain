@@ -66,4 +66,34 @@ impl Blockchain {
 
         true
     }
+
+    pub fn try_to_add_a_block(&mut self, block: Block) {
+        let last_block = self
+            .chain
+            .last()
+            .expect("There should be at least one block");
+
+        if self.is_block_valid(&block, last_block) {
+            self.chain.push(block);
+        } else {
+            println!("Could not add block");
+        }
+    }
+
+    pub fn is_chain_valid(&self, chain: &[Block]) -> bool {
+        for block_index in 0..chain.len() {
+            if block_index == 0 {
+                continue;
+            }
+
+            let first = chain.get(block_index - 1).expect("has to exist");
+            let second = chain.get(block_index).expect("has to exist");
+
+            if !self.is_block_valid(second, first) {
+                return false;
+            }
+        }
+
+        true
+    }
 }
