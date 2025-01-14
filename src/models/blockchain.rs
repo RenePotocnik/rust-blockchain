@@ -48,4 +48,22 @@ impl Blockchain {
         self.chain.push(new_block.clone());
         println!("New block added to chain -> {:?}", new_block);
     }
+
+    pub fn is_block_valid(&self, block: &Block, previous_block: &Block) -> bool {
+        if block.previous_hash != previous_block.hash {
+            println!("Block with id: {} has wrong previous hash", block.index);
+            return false;
+        } else if !block.hash.starts_with(&"0".repeat(self.difficulty)) {
+            return false;
+        } else if block.index != previous_block.index + 1 {
+            println!(
+                "Block with id: {} is not the next block after the latest: {}",
+                block.index, previous_block.index
+            );
+        } else if block.generate_block_hash() != block.hash {
+            println!("Block with id: {} has invalid hash", block.index);
+        }
+
+        true
+    }
 }
