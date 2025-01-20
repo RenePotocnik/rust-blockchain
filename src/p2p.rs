@@ -160,14 +160,18 @@ pub fn handle_create_block(cmd: &str, swarm: &mut Swarm<BlockchainBehaviour>) {
             .last()
             .expect("there is at least one block");
 
-        let block = block::Block::new(
+        let mut block = block::Block::new(
             latest_block.index + 1,
             latest_block.hash.clone(),
-            // data.to_owned(),
+            data.to_owned(),
         );
 
+        // Mine the block
+        block.mine(behaviour.blockchain.clone());
+        // Add the mined block to the chain
+        behaviour.blockchain.chain.push(block.clone());
+
         let json = serde_json::to_string(&block).expect("can jsonify request");
-        behaviour.blockchain.chain.push(block);
 
         println!("broadcasting new block");
 

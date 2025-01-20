@@ -16,7 +16,6 @@ use libp2p::{
     swarm::SwarmBuilder,
     tcp::TokioTcpConfig,
 };
-use sha2::{Digest, Sha256};
 use tokio::{
     io::{AsyncBufReadExt, BufReader, stdin},
     select, spawn,
@@ -25,25 +24,8 @@ use tokio::{
 };
 
 use crate::models::blockchain;
-use models::block::Block;
-use models::blockchain::Blockchain;
-// fn main() {
-//     let mut blockchain = Blockchain::new(1);
-//
-//     blockchain.add_block();
-//     // blockchain.add_block();
-//     // blockchain.add_block();
-// }
 
-// pub fn hash_to_binary(hash: &[u8]) -> String {
-//     let mut res = String::default();
-//
-//     for character in hash {
-//         res.push_str(&format!("{:b}", character));
-//     }
-//
-//     res
-// }
+const MINING_DIFFICULTY: usize = 3;
 
 #[tokio::main]
 async fn main() {
@@ -63,7 +45,7 @@ async fn main() {
         .boxed();
 
     let behaviour = p2p::BlockchainBehaviour::new(
-        blockchain::Blockchain::new(3),
+        blockchain::Blockchain::new(MINING_DIFFICULTY),
         response_sender,
         init_sender.clone(),
     )
@@ -102,7 +84,7 @@ async fn main() {
                     Some(p2p::EventType::Init)
                 }
                 event = swarm.select_next_some() => {
-                    println!("Unhandled Swarm event: {:?}", event);
+                    // println!("Unhandled Swarm event: {:?}", event);
                     None
                 }
             }

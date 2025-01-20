@@ -22,6 +22,7 @@ impl Blockchain {
             timestamp: Utc::now().timestamp_millis() as u64,
             proof_of_work: u64::default(),
             previous_hash: String::default(),
+            data: "Genesis Block".to_string(),
             hash: String::default(),
         };
 
@@ -42,6 +43,7 @@ impl Blockchain {
         let mut new_block = Block::new(
             self.chain.len() as u64,
             self.chain[&self.chain.len() - 1].hash.clone(),
+            "".to_string(),
         );
 
         new_block.mine(self.clone());
