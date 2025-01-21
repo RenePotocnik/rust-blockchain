@@ -46,6 +46,8 @@ pub struct BlockchainBehaviour {
     pub init_sender: mpsc::UnboundedSender<bool>,
     #[behaviour(ignore)]
     pub blockchain: Blockchain,
+    #[behaviour(ignore)]
+    pub mining: bool,
 }
 
 impl BlockchainBehaviour {
@@ -62,6 +64,7 @@ impl BlockchainBehaviour {
                 .expect("can create mdns"),
             response_sender,
             init_sender,
+            mining: false,
         };
 
         behaviour.floodsub.subscribe(CHAIN_TOPIC.clone());
@@ -117,7 +120,22 @@ impl NetworkBehaviourEventProcess<FloodsubEvent> for BlockchainBehaviour {
             } else if let Ok(block) = serde_json::from_slice::<block::Block>(&msg.data) {
                 println!("received new block from {}", msg.source);
 
-                self.blockchain.try_to_add_a_block(block);
+                if block.is_mined(self.blockchain.difficulty) {
+                    // Block is already mined, stop mining and try to add it to the blockchain
+                    self.mining = false;
+                    self.blockchain.try_to_add_a_block(block);
+                } else {
+                    // Block is not mined, start mining
+                    self.mining = true;
+                    let mut block = block.clone();
+                    block.mine(self.blockchain.clone(), &mut self.mining);
+
+                    // Broadcast the mined block
+                    let json = serde_json::to_string(&block).expect("can jsonify request");
+                    self.floodsub.publish(BLOCK_TOPIC.clone(), json.as_bytes());
+
+                    self.blockchain.try_to_add_a_block(block);
+                }
             }
         }
     }
@@ -160,20 +178,15 @@ pub fn handle_create_block(cmd: &str, swarm: &mut Swarm<BlockchainBehaviour>) {
             .last()
             .expect("there is at least one block");
 
-        let mut block = block::Block::new(
+        let block = block::Block::new(
             latest_block.index + 1,
             latest_block.hash.clone(),
             data.to_owned(),
         );
 
-        // Mine the block
-        block.mine(behaviour.blockchain.clone());
-        // Add the mined block to the chain
-        behaviour.blockchain.chain.push(block.clone());
-
         let json = serde_json::to_string(&block).expect("can jsonify request");
 
-        println!("broadcasting new block");
+        println!("broadcasting new block for mining");
 
         behaviour
             .floodsub

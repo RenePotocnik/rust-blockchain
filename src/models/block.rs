@@ -1,24 +1,20 @@
 use super::blockchain::Blockchain;
 use chrono::prelude::*;
-use sha2::{Sha256, Digest};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
     pub index: u64,
     pub timestamp: u64,
     pub proof_of_work: u64,
-    pub previous_hash: String,  // Hash of the previous block
-    pub data: String,  // Data to be stored in the block
-    pub hash: String  // Hash of the current block
+    pub previous_hash: String, // Hash of the previous block
+    pub data: String,          // Data to be stored in the block
+    pub hash: String,          // Hash of the current block
 }
 
 impl Block {
-    pub fn new (
-        index: u64,
-        previous_hash: String,
-        data: String
-    ) -> Self {
+    pub fn new(index: u64, previous_hash: String, data: String) -> Self {
         // Current block to be created.
         let block = Block {
             index,
@@ -33,14 +29,14 @@ impl Block {
     }
 
     // Mine block hash.
-    pub fn mine (&mut self, blockchain: Blockchain) {
-        loop {
+    pub fn mine(&mut self, blockchain: Blockchain, mining_flag: &mut bool) {
+        while *mining_flag {
             if !self.hash.starts_with(&"0".repeat(blockchain.difficulty)) {
                 self.proof_of_work += 1;
                 self.hash = self.generate_block_hash();
                 println!("Hash: {}", self.hash);
             } else {
-                break
+                break;
             }
         }
     }
@@ -60,5 +56,9 @@ impl Block {
 
         let result = hasher.finalize();
         format!("{:x}", result)
+    }
+
+    pub fn is_mined(&self, difficulty: usize) -> bool {
+        self.hash.starts_with(&"0".repeat(difficulty))
     }
 }
