@@ -22,7 +22,7 @@ impl Blockchain {
             timestamp: Utc::now().timestamp_millis() as u64,
             proof_of_work: u64::default(),
             previous_hash: String::default(),
-            data: "Genesis Block".to_string(),
+            transactions: Vec::new(),
             hash: String::default(),
         };
 
@@ -38,18 +38,6 @@ impl Blockchain {
         };
         blockchain
     }
-
-    // pub fn add_block(&mut self) {
-    //     let mut new_block = Block::new(
-    //         self.chain.len() as u64,
-    //         self.chain[&self.chain.len() - 1].hash.clone(),
-    //         "".to_string(),
-    //     );
-    //
-    //     new_block.mine(self.clone());
-    //     self.chain.push(new_block.clone());
-    //     println!("New block added to chain -> {:?}", new_block);
-    // }
 
     pub fn is_block_valid(&self, block: &Block, previous_block: &Block) -> bool {
         if block.previous_hash != previous_block.hash {

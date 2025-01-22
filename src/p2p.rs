@@ -1,23 +1,23 @@
 use std::collections::HashSet;
 
 use libp2p::{
+    NetworkBehaviour, PeerId, Swarm,
     floodsub::{Floodsub, FloodsubEvent, Topic},
     identity,
     mdns::{Mdns, MdnsEvent},
     swarm::NetworkBehaviourEventProcess,
-    NetworkBehaviour, PeerId, Swarm,
 };
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
-use crate::{models::block, blockchain::Blockchain};
+use crate::{blockchain::Blockchain, models::block, models::transaction::Transaction};
+
 
 pub static KEYS: Lazy<identity::Keypair> = Lazy::new(identity::Keypair::generate_ed25519);
 pub static PEER_ID: Lazy<PeerId> = Lazy::new(|| PeerId::from(KEYS.public()));
 pub static CHAIN_TOPIC: Lazy<Topic> = Lazy::new(|| Topic::new("chains"));
 pub static BLOCK_TOPIC: Lazy<Topic> = Lazy::new(|| Topic::new("blocks"));
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChainResponse {
@@ -178,10 +178,12 @@ pub fn handle_create_block(cmd: &str, swarm: &mut Swarm<BlockchainBehaviour>) {
             .last()
             .expect("there is at least one block");
 
+        let transactions: Vec<Transaction> = serde_json::from_str(data).expect("can parse transactions");
+
         let block = block::Block::new(
             latest_block.index + 1,
             latest_block.hash.clone(),
-            data.to_owned(),
+            transactions,
         );
 
         let json = serde_json::to_string(&block).expect("can jsonify request");

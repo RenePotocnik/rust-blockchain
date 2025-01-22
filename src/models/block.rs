@@ -1,4 +1,5 @@
 use super::blockchain::Blockchain;
+use super::transaction::Transaction;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -9,19 +10,19 @@ pub struct Block {
     pub timestamp: u64,
     pub proof_of_work: u64,
     pub previous_hash: String, // Hash of the previous block
-    pub data: String,          // Data to be stored in the block
-    pub hash: String,          // Hash of the current block
+    pub transactions: Vec<Transaction>,
+    pub hash: String, // Hash of the current block
 }
 
 impl Block {
-    pub fn new(index: u64, previous_hash: String, data: String) -> Self {
+    pub fn new(index: u64, previous_hash: String, transactions: Vec<Transaction>) -> Self {
         // Current block to be created.
         let block = Block {
             index,
             timestamp: Utc::now().timestamp_millis() as u64,
             proof_of_work: u64::default(),
             previous_hash,
-            data: data.clone(),
+            transactions,
             hash: String::default(),
         };
 
